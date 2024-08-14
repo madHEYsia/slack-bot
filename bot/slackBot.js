@@ -1,4 +1,4 @@
-const { App } = require('@slack/bolt');
+const { App, ExpressReceiver } = require('@slack/bolt');
 const { slackBotToken, slackSigningSecret, confidenceThreshold } = require('./config');
 const { fetchFromKnowledgeBase } = require('./knowledgeBase');
 const { createJiraTicket } = require('./jira');
@@ -10,6 +10,23 @@ const app = new App({
   token: slackBotToken,
   signingSecret: slackSigningSecret
 });
+
+// Initialize ExpressReceiver for custom routes
+const receiver = new ExpressReceiver({
+    signingSecret: slackSigningSecret
+});
+
+// Express middleware to handle the challenge verification
+receiver.router.post('/slack/events', (req, res) => {
+    // Check if the request contains the challenge parameter
+    if (req.body && req.body.challenge) {
+      // Respond with the challenge value to verify the endpoint
+      res.status(200).send(req.body.challenge);
+    } else {
+      // Handle other cases (if any)
+      res.status(400).send('Invalid request');
+    }
+  });
 
 app.message(async ({ message, say }) => {
   try {

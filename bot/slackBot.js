@@ -11,6 +11,9 @@ const app = new App({
   signingSecret: slackSigningSecret
 });
 
+console.log("---- slackBotToken ---->>> ", slackBotToken);
+console.log("---- slackSigningSecret ---->>> ", slackSigningSecret);
+
 // Initialize ExpressReceiver for custom routes
 const receiver = new ExpressReceiver({
     signingSecret: slackSigningSecret

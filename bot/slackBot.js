@@ -1,10 +1,8 @@
+const express = require('express');
+const crypto = require('crypto');
 const { App, ExpressReceiver } = require('@slack/bolt');
-const { slackBotToken, slackSigningSecret, confidenceThreshold } = require('./config');
-const { fetchFromKnowledgeBase } = require('./knowledgeBase');
-const { createJiraTicket } = require('./jira');
-const { analyzeMessageWithOpenAI } = require('./openaiAnalyzer');
-
-// Initialize your Bolt app with the bot token and signing secret
+const bodyParser = require('body-parser');
+const { slackBotToken, slackSigningSecret } = require('./config');
 
 const app = new App({
   token: slackBotToken,
@@ -15,6 +13,9 @@ const app = new App({
 const receiver = new ExpressReceiver({
     signingSecret: slackSigningSecret
 });
+
+// Use raw body parser for Slack requests
+receiver.router.use('/slack/events', bodyParser.raw({ type: 'application/json' }));
 
 receiver.router.post('/slack/events', (req, res) => {
     const slackSignature = req.headers['x-slack-signature'];
@@ -42,6 +43,10 @@ receiver.router.post('/slack/events', (req, res) => {
     const hash = hmac.update(sigBasestring).digest('hex');
     const mySignature = `v0=${hash}`;
 
+    console.log('Signature base string:', sigBasestring);
+    console.log('Computed signature:', mySignature);
+    console.log('Slack signature:', slackSignature);
+
     // Step 4: Compare the computed signature with the signature in the request header
     const isVerified = crypto.timingSafeEqual(Buffer.from(mySignature), Buffer.from(slackSignature));
 
@@ -63,33 +68,7 @@ receiver.router.post('/slack/events', (req, res) => {
 });
 
 app.message(async ({ message, say }) => {
-  try {
-    console.log("Message ", message);
-    const text = message.text;
-    const channel = message.channel;
-
-    // Step 1: Check the knowledge base
-    const knowledgeBaseResult = fetchFromKnowledgeBase(text);
-
-    if (knowledgeBaseResult.confidence >= confidenceThreshold) {
-      await say({ text: knowledgeBaseResult.answer });
-    } else {
-      const isBug = await analyzeMessageWithOpenAI(text);
-      if (isBug) {
-        const jiraResponse = await createJiraTicket(
-          'Bug reported in Slack',
-          text,
-          'appropriate_assignee'  // Replace with the appropriate assignee logic
-        );
-        await say({ text: `Jira ticket created: ${jiraResponse.key}` });
-      } else {
-        await say({ text: "I couldn't determine the issue from your message. Please provide more details." });
-      }
-    }
-  } catch (error) {
-    console.error('Error handling Slack message:', error);
-    await say({ text: 'An error occurred while processing your message.' });
-  }
+  // Your app logic here
 });
 
 // Start your app

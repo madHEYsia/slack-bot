@@ -31,19 +31,33 @@ const slackApp = new App({
   signingSecret: slackSigningSecret
 });
 
+const postOnSlack = async (text, say, client, prevMsg) => {
+    if(prevMsg) {
+        await client.chat.update({
+            channel: prevMsg.channel,
+            ts: prevMsg.ts,
+            text: text
+        });
+    } else {
+        await say({ text: knowledgeBaseResult.answer });
+    }
+}
+
 // Define message event handler
-slackApp.message(async ({ message, say }) => {
+slackApp.message(async ({ message, say, client }) => {
     try {
         console.log("Message ", message);
-        const text = message.text;
+        const text = message?.text || message?.message?.text;
         if(!text) return;
+
         const channel = message.channel;
+        const prevMsg = message.previous_message;
     
         // Step 1: Check the knowledge base
         const knowledgeBaseResult = fetchFromKnowledgeBase(text);
     
         if (knowledgeBaseResult.confidence >= confidenceThreshold) {
-            await say({ text: knowledgeBaseResult.answer });
+            postOnSlack(knowledgeBaseResult.answer, say, client, prevMsg);
         } else {
             const jiraResponse = await createJiraTicket(
               'Bug reported in Slack',
@@ -51,13 +65,13 @@ slackApp.message(async ({ message, say }) => {
               'appropriate_assignee'  // Replace with the appropriate assignee logic
             );
             if(jiraResponse)
-                await say({ text: `Jira ticket created: ${jiraResponse.key}.\nTicket url: ${jiraResponse.self}` });
+                postOnSlack(`Jira ticket created: ${jiraResponse.key}.\nTicket url: ${jiraResponse.self}`, say, client, prevMsg);
             else 
-                await say({ text: `Jira ticket creation failed` });
+                postOnSlack(`Jira ticket creation failed`, say, client, prevMsg);
         }
     } catch (error) {
         console.error('Error handling Slack message:', error);
-        await say({ text: 'An error occurred while processing your message.' });
+        postOnSlack(`An error occurred while processing your message.`, say);
     }
 });
 

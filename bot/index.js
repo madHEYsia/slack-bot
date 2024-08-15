@@ -9,12 +9,14 @@ const { createJiraTicket } = require('./jira');
 // Initialize the Express app
 const expressApp = express();
 
+// Can be moved to external redis to avoid in-memory server crash and proper expiry
+const Hash = {};
+
 // Use body-parser middleware to parse JSON requests
 expressApp.use(bodyParser.json());
 
 // Define a route to handle Slack's event subscription verification
 expressApp.post('/slack/events', (req, res) => {
-    console.log("req.body ---> ", req.body);
     // Check if the request contains a challenge parameter
     if (req.body && req.body.challenge) {
         // Respond with the challenge value
@@ -31,16 +33,20 @@ const slackApp = new App({
   signingSecret: slackSigningSecret
 });
 
-const postOnSlack = async (text, say, client, prevMsg, channel) => {
-    console.log(" ---->>>> ",text, channel);
+const postOnSlack = async (text, say, client, message) => {
+    const channel = message.channel;
+    const prevMsg = message.previous_message;
     if(prevMsg) {
-        await client.chat.update({
+        const { ts } = await client.chat.update({
             channel,
-            ts: prevMsg.ts,
+            ts: Hash[prevMsg.ts],
             text
         });
+        delete Hash[prevMsg.ts];
+        Hash[message.ts] = ts;
     } else {
-        await say({ text: text });
+        const { ts } = await say({ text: text });
+        Hash[message.ts] = ts;
     }
 }
 
@@ -50,15 +56,12 @@ slackApp.message(async ({ message, say, client }) => {
         console.log("Message ", message);
         const text = message?.text || message?.message?.text;
         if(!text) return;
-
-        const channel = message.channel;
-        const prevMsg = message.previous_message;
     
         // Step 1: Check the knowledge base
         const knowledgeBaseResult = fetchFromKnowledgeBase(text);
     
         if (knowledgeBaseResult.confidence >= confidenceThreshold) {
-            postOnSlack(knowledgeBaseResult.answer, say, client, prevMsg, channel);
+            postOnSlack(knowledgeBaseResult.answer, say, client, message);
         } else {
             const jiraResponse = await createJiraTicket(
               'Bug reported in Slack',
@@ -66,9 +69,9 @@ slackApp.message(async ({ message, say, client }) => {
               'appropriate_assignee'  // Replace with the appropriate assignee logic
             );
             if(jiraResponse)
-                postOnSlack(`Jira ticket created: ${jiraResponse.key}.\nTicket url: ${jiraResponse.self}`, say, client, prevMsg, channel);
+                postOnSlack(`Jira ticket created: ${jiraResponse.key}.\nTicket url: ${jiraResponse.self}`, say, client, message);
             else 
-                postOnSlack(`Jira ticket creation failed`, say, client, prevMsg, channel);
+                postOnSlack(`Jira ticket creation failed`, say, client, message);
         }
     } catch (error) {
         console.error('Error handling Slack message:', error);

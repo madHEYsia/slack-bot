@@ -1,7 +1,7 @@
-
 const axios = require('axios');
 const { jiraEmail, jiraProj, jiraApiToken, jiraBaseUrl } = require('./config');
 
+// Function to create a Jira ticket
 const createJiraTicket = async (summary, description, assignee) => {
     try {
         const response = await axios.post(
@@ -42,11 +42,32 @@ const createJiraTicket = async (summary, description, assignee) => {
             }
         );
 
-        return response.data;
+        return response.data; // This will contain the issue key
     } catch (error) {
         console.error('Error creating issue:', error.response ? error.response.data : error.message);
         return null;
     }
 };
 
-module.exports = { createJiraTicket };
+// Function to delete a Jira ticket using its key
+const deleteJiraTicket = async (issueKey) => {
+    try {
+        const response = await axios.delete(
+            `${jiraBaseUrl}/rest/api/3/issue/${issueKey}`,
+            {
+                headers: {
+                    'Authorization': `Basic ${Buffer.from(`${jiraEmail}:${jiraApiToken}`).toString('base64')}`,
+                    'Accept': 'application/json'
+                }
+            }
+        );
+
+        console.log(`Issue ${issueKey} deleted successfully`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting issue:', error.response ? error.response.data : error.message);
+        return null;
+    }
+};
+
+module.exports = { createJiraTicket, deleteJiraTicket };

@@ -1,28 +1,52 @@
 
 const axios = require('axios');
-const { jiraApiToken, jiraBaseUrl } = require('./config');
+const { jiraEmail, jiraProj, jiraApiToken, jiraBaseUrl } = require('./config');
 
-async function createJiraTicket(summary, description, assignee) {
-    const url = `${jiraBaseUrl}/rest/api/3/issue`;
-    const payload = {
-        fields: {
-            project: { key: 'PROJECT_KEY' },  // Replace with your project key
-            summary: summary,
-            description: description,
-            issuetype: { name: 'Bug' },
-            assignee: { name: assignee },  // Map your assignee here
-        }
-    };
+const createJiraTicket = async (summary, description, assignee) => {
+    try {
+        const response = await axios.post(
+            `${jiraBaseUrl}/rest/api/3/issue`,
+            {
+                fields: {
+                    project: {
+                        key: jiraProj
+                    },
+                    summary: summary,
+                    description: {
+                        "type": "doc",
+                        "version": 1,
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": description
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    issuetype: {
+                        name: "Initiative"
+                    }
+                    // assignee: { name: assignee },  // Map your assignee here
+                }
+            },
+            {
+                headers: {
+                    'Authorization': `Basic ${Buffer.from(`${jiraEmail}:${jiraApiToken}`).toString('base64')}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
 
-    const response = await axios.post(url, payload, {
-        headers: {
-            'Authorization': `Bearer ${jiraApiToken}`,
-            'Content-Type': 'application/json',
-        }
-    });
-
-    return response.data;
-}
+        console.log('Issue created successfully:', response.data);
+    } catch (error) {
+        console.error('Error creating issue:', error.response ? error.response.data : error.message);
+    }
+};
 
 module.exports = { createJiraTicket };
             

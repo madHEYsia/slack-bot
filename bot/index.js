@@ -3,6 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { App } = require('@slack/bolt');
 const { slackBotToken, slackSigningSecret } = require('./config');
+const { fetchFromKnowledgeBase } = require('./knowledgeBase');
 
 // Initialize the Express app
 const expressApp = express();
@@ -40,19 +41,20 @@ slackApp.message(async ({ message, say }) => {
         const knowledgeBaseResult = fetchFromKnowledgeBase(text);
     
         if (knowledgeBaseResult.confidence >= confidenceThreshold) {
-          await say({ text: knowledgeBaseResult.answer });
+            await say({ text: knowledgeBaseResult.answer });
         } else {
-          const isBug = await analyzeMessageWithOpenAI(text);
-          if (isBug) {
-            const jiraResponse = await createJiraTicket(
-              'Bug reported in Slack',
-              text,
-              'appropriate_assignee'  // Replace with the appropriate assignee logic
-            );
-            await say({ text: `Jira ticket created: ${jiraResponse.key}` });
-          } else {
-            await say({ text: "I couldn't determine the issue from your message. Please provide more details." });
-          }
+            await say({ text: "Didn't found in direct lookup" });
+        //   const isBug = await analyzeMessageWithOpenAI(text);
+        //   if (isBug) {
+        //     const jiraResponse = await createJiraTicket(
+        //       'Bug reported in Slack',
+        //       text,
+        //       'appropriate_assignee'  // Replace with the appropriate assignee logic
+        //     );
+        //     await say({ text: `Jira ticket created: ${jiraResponse.key}` });
+        //   } else {
+        //     await say({ text: "I couldn't determine the issue from your message. Please provide more details." });
+        //   }
         }
     } catch (error) {
         console.error('Error handling Slack message:', error);

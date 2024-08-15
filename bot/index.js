@@ -1,14 +1,18 @@
+// Import required modules
 const express = require('express');
 const bodyParser = require('body-parser');
+const { App } = require('@slack/bolt');
+const { slackBotToken, slackSigningSecret } = require('./config');
 
 // Initialize the Express app
-const app = express();
+const expressApp = express();
 
 // Use body-parser middleware to parse JSON requests
-app.use(bodyParser.json());
+expressApp.use(bodyParser.json());
 
 // Define a route to handle Slack's event subscription verification
-app.post('/slack/events', (req, res) => {
+expressApp.post('/slack/events', (req, res) => {
+    console.log("req.body ---> ", req.body);
     // Check if the request contains a challenge parameter
     if (req.body && req.body.challenge) {
         // Respond with the challenge value
@@ -19,8 +23,32 @@ app.post('/slack/events', (req, res) => {
     }
 });
 
-// Start the server on port 3000
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// Initialize the Slack Bolt app
+const slackApp = new App({
+  token: slackBotToken,
+  signingSecret: slackSigningSecret
 });
+
+// Define message event handler
+slackApp.message(async ({ message, say }) => {
+    console.log("Message ", message);
+    await say({ text: 'BOT TESTING ...' });
+});
+
+// Start both Express and Slack Bolt app on different ports
+(async () => {
+  try {
+    // Start the Express server on port 3001
+    const expressPort = process.env.EXPRESS_PORT || 3001;
+    expressApp.listen(expressPort, () => {
+      console.log(`Express server is running on port ${expressPort}`);
+    });
+
+    // Start the Slack Bolt app on port 3000
+    const slackPort = process.env.SLACK_PORT || 3000;
+    await slackApp.start(slackPort);
+    console.log('⚡️ Bolt app is running!');
+  } catch (error) {
+    console.error('Failed to start Bolt app or Express server:', error);
+  }
+})();

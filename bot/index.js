@@ -1,7 +1,6 @@
 // Import required modules
 const express = require('express');
 const bodyParser = require('body-parser');
-const crypto = require('crypto');
 const { App } = require('@slack/bolt');
 const { slackBotToken, slackSigningSecret } = require('./config');
 
@@ -32,8 +31,33 @@ const slackApp = new App({
 
 // Define message event handler
 slackApp.message(async ({ message, say }) => {
-    console.log("Message ", message);
-    await say({ text: 'BOT TESTING ...' });
+    try {
+        console.log("Message ", message);
+        const text = message.text;
+        const channel = message.channel;
+    
+        // Step 1: Check the knowledge base
+        const knowledgeBaseResult = fetchFromKnowledgeBase(text);
+    
+        if (knowledgeBaseResult.confidence >= confidenceThreshold) {
+          await say({ text: knowledgeBaseResult.answer });
+        } else {
+          const isBug = await analyzeMessageWithOpenAI(text);
+          if (isBug) {
+            const jiraResponse = await createJiraTicket(
+              'Bug reported in Slack',
+              text,
+              'appropriate_assignee'  // Replace with the appropriate assignee logic
+            );
+            await say({ text: `Jira ticket created: ${jiraResponse.key}` });
+          } else {
+            await say({ text: "I couldn't determine the issue from your message. Please provide more details." });
+          }
+        }
+    } catch (error) {
+        console.error('Error handling Slack message:', error);
+        await say({ text: 'An error occurred while processing your message.' });
+    }
 });
 
 // Start both Express and Slack Bolt app on different ports

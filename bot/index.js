@@ -14,6 +14,14 @@ function verifySlackRequest(req, res, next) {
     const slackRequestTimestamp = req.headers['x-slack-request-timestamp'];
     const requestBody = req.rawBody;
 
+    console.log("slackSignature:", slackSignature);
+    console.log("slackRequestTimestamp:", slackRequestTimestamp);
+    console.log("requestBody:", requestBody);
+
+    if (!slackSignature || !slackRequestTimestamp || !requestBody) {
+        return res.status(400).send('Missing signature, timestamp, or body');
+    }
+
     const time = Math.floor(new Date().getTime() / 1000);
     if (Math.abs(time - slackRequestTimestamp) > 300) { // 5-minute window
         return res.status(400).send('Request timeout');
@@ -33,8 +41,8 @@ function verifySlackRequest(req, res, next) {
 
 // Use the middleware to capture the raw body
 expressApp.use(bodyParser.json({
-    verify: (req, res, buf) => {
-        req.rawBody = buf.toString();
+    verify: (req, res, buf, encoding) => {
+        req.rawBody = buf && buf.length ? buf.toString(encoding || 'utf8') : '';
     }
 }));
 

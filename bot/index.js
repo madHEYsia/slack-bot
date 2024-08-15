@@ -36,6 +36,7 @@ slackApp.message(async ({ message, say }) => {
     try {
         console.log("Message ", message);
         const text = message.text;
+        if(!text) return;
         const channel = message.channel;
     
         // Step 1: Check the knowledge base
@@ -50,7 +51,7 @@ slackApp.message(async ({ message, say }) => {
               'appropriate_assignee'  // Replace with the appropriate assignee logic
             );
             if(jiraResponse)
-                await say({ text: `Jira ticket created: ${jiraResponse.key}. Ticket url: ${jiraResponse.self}` });
+                await say({ text: `Jira ticket created: ${jiraResponse.key}.\nTicket url: ${jiraResponse.self}` });
             else 
                 await say({ text: `Jira ticket creation failed` });
         }

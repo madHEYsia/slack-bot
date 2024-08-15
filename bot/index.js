@@ -1,14 +1,45 @@
 // Import required modules
 const express = require('express');
 const bodyParser = require('body-parser');
+const crypto = require('crypto');
 const { App } = require('@slack/bolt');
 const { slackBotToken, slackSigningSecret } = require('./config');
 
 // Initialize the Express app
 const expressApp = express();
 
-// Use body-parser middleware to parse JSON requests
-expressApp.use(bodyParser.json());
+// Middleware for verifying Slack requests
+function verifySlackRequest(req, res, next) {
+    const slackSignature = req.headers['x-slack-signature'];
+    const slackRequestTimestamp = req.headers['x-slack-request-timestamp'];
+    const requestBody = req.rawBody;
+
+    const time = Math.floor(new Date().getTime() / 1000);
+    if (Math.abs(time - slackRequestTimestamp) > 300) { // 5-minute window
+        return res.status(400).send('Request timeout');
+    }
+
+    const sigBasestring = 'v0:' + slackRequestTimestamp + ':' + requestBody;
+    const mySignature = 'v0=' + crypto.createHmac('sha256', slackSigningSecret)
+                                      .update(sigBasestring, 'utf8')
+                                      .digest('hex');
+
+    if (crypto.timingSafeEqual(Buffer.from(mySignature, 'utf8'), Buffer.from(slackSignature, 'utf8'))) {
+        next();
+    } else {
+        return res.status(400).send('Verification failed');
+    }
+}
+
+// Use the middleware to capture the raw body
+expressApp.use(bodyParser.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf.toString();
+    }
+}));
+
+// Use the signature verification middleware
+expressApp.use(verifySlackRequest);
 
 // Define a route to handle Slack's event subscription verification
 expressApp.post('/slack/events', (req, res) => {

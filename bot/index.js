@@ -36,7 +36,7 @@ const slackApp = new App({
 const postOnSlack = async (text, say, client, message, prevJiraKey) => {
     const channel = message.channel;
     const prevMsg = message.previous_message;
-    console.log("HASH BEFORE ---->>> ", prevMsg, Hash);
+    console.log("HASH BEFORE ---->>> ", Hash);
     if(prevMsg) {
         const { ts } = await client.chat.update({
             channel,
@@ -44,7 +44,6 @@ const postOnSlack = async (text, say, client, message, prevJiraKey) => {
             text
         });
         await deleteJiraTicket(Hash[prevMsg.ts]?.prevJiraKey);
-        delete Hash[prevMsg.ts];
         Hash[message.ts] = { ts, prevJiraKey };
         console.log("HASH AFTER IF ---->>> ", ts, Hash);
     } else {
@@ -57,12 +56,13 @@ const postOnSlack = async (text, say, client, message, prevJiraKey) => {
 // Define message event handler
 slackApp.message(async ({ message, say, client }) => {
     try {
-        console.log("==================");
-        console.log("Message ", message);
-        console.log("==================");
         const text = message?.text || message?.message?.text;
         const botResponse = message?.message?.bot_id
         if(!text || botResponse) return;
+
+        console.log("==================");
+        console.log("Message ", message);
+        console.log("==================");
     
         // Step 1: Check the knowledge base
         const knowledgeBaseResult = fetchFromKnowledgeBase(text);

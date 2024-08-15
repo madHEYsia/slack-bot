@@ -57,7 +57,7 @@ slackApp.message(async ({ message, say, client }) => {
         console.log("Message ", message);
         console.log("==================");
         const text = message?.text || message?.message?.text;
-        const botResponse = message?.previous_message?.bot_id
+        const botResponse = message?.message?.bot_id
         if(!text || botResponse) return;
     
         // Step 1: Check the knowledge base

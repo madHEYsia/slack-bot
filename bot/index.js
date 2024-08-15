@@ -14,6 +14,7 @@ expressApp.use(bodyParser.json());
 
 // Define a route to handle Slack's event subscription verification
 expressApp.post('/slack/events', (req, res) => {
+    console.log("req.body ---> ", req.body);
     // Check if the request contains a challenge parameter
     if (req.body && req.body.challenge) {
         // Respond with the challenge value
@@ -30,12 +31,13 @@ const slackApp = new App({
   signingSecret: slackSigningSecret
 });
 
-const postOnSlack = async (text, say, client, prevMsg) => {
+const postOnSlack = async (text, say, client, prevMsg, channel) => {
+    console.log(" ---->>>> ",text, channel);
     if(prevMsg) {
         await client.chat.update({
-            channel: prevMsg.channel,
+            channel,
             ts: prevMsg.ts,
-            text: text
+            text
         });
     } else {
         await say({ text: text });
@@ -56,7 +58,7 @@ slackApp.message(async ({ message, say, client }) => {
         const knowledgeBaseResult = fetchFromKnowledgeBase(text);
     
         if (knowledgeBaseResult.confidence >= confidenceThreshold) {
-            postOnSlack(knowledgeBaseResult.answer, say, client, prevMsg);
+            postOnSlack(knowledgeBaseResult.answer, say, client, prevMsg, channel);
         } else {
             const jiraResponse = await createJiraTicket(
               'Bug reported in Slack',
@@ -64,9 +66,9 @@ slackApp.message(async ({ message, say, client }) => {
               'appropriate_assignee'  // Replace with the appropriate assignee logic
             );
             if(jiraResponse)
-                postOnSlack(`Jira ticket created: ${jiraResponse.key}.\nTicket url: ${jiraResponse.self}`, say, client, prevMsg);
+                postOnSlack(`Jira ticket created: ${jiraResponse.key}.\nTicket url: ${jiraResponse.self}`, say, client, prevMsg, channel);
             else 
-                postOnSlack(`Jira ticket creation failed`, say, client, prevMsg);
+                postOnSlack(`Jira ticket creation failed`, say, client, prevMsg, channel);
         }
     } catch (error) {
         console.error('Error handling Slack message:', error);

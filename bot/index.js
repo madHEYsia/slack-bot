@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const { App } = require('@slack/bolt');
 const { slackBotToken, slackSigningSecret, confidenceThreshold } = require('./config');
 const { fetchFromKnowledgeBase } = require('./knowledgeBase');
-const { createJiraTicket } = require('./jira');
+const { createJiraTicket, deleteJiraTicket } = require('./jira');
 
 // Initialize the Express app
 const expressApp = express();
@@ -33,20 +33,21 @@ const slackApp = new App({
   signingSecret: slackSigningSecret
 });
 
-const postOnSlack = async (text, say, client, message) => {
+const postOnSlack = async (text, say, client, message, prevJiraKey) => {
     const channel = message.channel;
     const prevMsg = message.previous_message;
     if(prevMsg) {
         const { ts } = await client.chat.update({
             channel,
-            ts: Hash[prevMsg.ts],
+            ts: Hash[prevMsg.ts]?.ts,
             text
         });
+        await deleteJiraTicket(Hash[prevMsg.ts]?.prevJiraKey);
         delete Hash[prevMsg.ts];
-        Hash[message.ts] = ts;
+        Hash[message.ts] = { ts, prevJiraKey };
     } else {
         const { ts } = await say({ text: text });
-        Hash[message.ts] = ts;
+        Hash[message.ts] = { ts, prevJiraKey };
     }
 }
 
@@ -72,7 +73,7 @@ slackApp.message(async ({ message, say, client }) => {
               'appropriate_assignee'  // Replace with the appropriate assignee logic
             );
             if(jiraResponse)
-                postOnSlack(`Jira ticket created: ${jiraResponse.key}.\nTicket url: ${jiraResponse.self}`, say, client, message);
+                postOnSlack(`Jira ticket created: ${jiraResponse.key}.\nTicket url: ${jiraResponse.self}`, say, client, message, jiraResponse.key);
             else 
                 postOnSlack(`Jira ticket creation failed`, say, client, message);
         }

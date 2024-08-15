@@ -36,6 +36,7 @@ const slackApp = new App({
 const postOnSlack = async (text, say, client, message, prevJiraKey) => {
     const channel = message.channel;
     const prevMsg = message.previous_message;
+    console.log("HASH BEFORE ---->>> ", prevMsg, Hash);
     if(prevMsg) {
         const { ts } = await client.chat.update({
             channel,
@@ -45,9 +46,11 @@ const postOnSlack = async (text, say, client, message, prevJiraKey) => {
         await deleteJiraTicket(Hash[prevMsg.ts]?.prevJiraKey);
         delete Hash[prevMsg.ts];
         Hash[message.ts] = { ts, prevJiraKey };
+        console.log("HASH AFTER IF ---->>> ", ts, Hash);
     } else {
         const { ts } = await say({ text: text });
         Hash[message.ts] = { ts, prevJiraKey };
+        console.log("HASH AFTER EL---->>> ", ts, Hash);
     }
 }
 

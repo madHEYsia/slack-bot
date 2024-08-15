@@ -49,7 +49,10 @@ slackApp.message(async ({ message, say }) => {
               text,
               'appropriate_assignee'  // Replace with the appropriate assignee logic
             );
-            await say({ text: `Jira ticket created: ${jiraResponse.key}. Ticket url: ${jiraResponse.self}` });
+            if(jiraResponse)
+                await say({ text: `Jira ticket created: ${jiraResponse.key}. Ticket url: ${jiraResponse.self}` });
+            else 
+                await say({ text: `Jira ticket creation failed` });
         }
     } catch (error) {
         console.error('Error handling Slack message:', error);

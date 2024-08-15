@@ -42,11 +42,11 @@ const createJiraTicket = async (summary, description, assignee) => {
             }
         );
 
-        console.log('Issue created successfully:', response.data);
+        return response.data;
     } catch (error) {
         console.error('Error creating issue:', error.response ? error.response.data : error.message);
+        return null;
     }
 };
 
 module.exports = { createJiraTicket };
-            

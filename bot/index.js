@@ -2,7 +2,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { App } = require('@slack/bolt');
-const { slackBotToken, slackSigningSecret } = require('./config');
+const { slackBotToken, slackSigningSecret, confidenceThreshold } = require('./config');
 const { fetchFromKnowledgeBase } = require('./knowledgeBase');
 
 // Initialize the Express app

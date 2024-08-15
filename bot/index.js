@@ -14,7 +14,6 @@ expressApp.use(bodyParser.json());
 
 // Define a route to handle Slack's event subscription verification
 expressApp.post('/slack/events', (req, res) => {
-    console.log("req.body ---> ", req.body);
     // Check if the request contains a challenge parameter
     if (req.body && req.body.challenge) {
         // Respond with the challenge value
@@ -39,7 +38,7 @@ const postOnSlack = async (text, say, client, prevMsg) => {
             text: text
         });
     } else {
-        await say({ text: knowledgeBaseResult.answer });
+        await say({ text: text });
     }
 }
 

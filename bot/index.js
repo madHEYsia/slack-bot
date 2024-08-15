@@ -53,7 +53,9 @@ const postOnSlack = async (text, say, client, message) => {
 // Define message event handler
 slackApp.message(async ({ message, say, client }) => {
     try {
+        console.log("==================");
         console.log("Message ", message);
+        console.log("==================");
         const text = message?.text || message?.message?.text;
         if(!text) return;
     

@@ -43,17 +43,15 @@ const postOnSlack = async (text, say, client, message, prevJiraKey) => {
             ts: Hash[prevMsg.ts]?.ts,
             text
         });
-        console.log("Response in el  ---->>> ", response);
-        const { ts } = response;
+        console.log("Response in if  ---->>> ", response);
+        const { ts } = response?.message?.edited || {};
         await deleteJiraTicket(Hash[prevMsg.ts]?.prevJiraKey);
         Hash[message.ts] = { ts, prevJiraKey };
-        console.log("HASH AFTER IF ---->>> ", ts, Hash);
     } else {
         const response = await say({ text: text });
-        console.log("Response in if  ---->>> ", response);
+        console.log("Response in el  ---->>> ", response);
         const { ts } = response;
         Hash[message.ts] = { ts, prevJiraKey };
-        console.log("HASH AFTER EL---->>> ", ts, Hash);
     }
 }
 

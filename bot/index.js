@@ -36,20 +36,17 @@ const slackApp = new App({
 const postOnSlack = async (text, say, client, message, prevJiraKey) => {
     const channel = message.channel;
     const prevMsg = message.previous_message;
-    console.log("HASH BEFORE ---->>> ", Hash);
     if(prevMsg) {
         const response = await client.chat.update({
             channel,
             ts: Hash[prevMsg.ts]?.ts,
             text
         });
-        console.log("Response in if  ---->>> ", response);
         const { ts } = response?.message?.edited || {};
-        await deleteJiraTicket(Hash[prevMsg.ts]?.prevJiraKey);
+        await deleteJiraTicket(Hash[prevMsg?.edited?.ts || prevMsg?.ts]?.prevJiraKey);
         Hash[message.ts] = { ts, prevJiraKey };
     } else {
         const response = await say({ text: text });
-        console.log("Response in el  ---->>> ", response);
         const { ts } = response;
         Hash[message.ts] = { ts, prevJiraKey };
     }

@@ -105,7 +105,7 @@ const analyseMsg = (text, say, client, message) => {
             }
         })
         .catch((err) => {
-            console.error('Error handling Slack message or JIRA ticket:', error);
+            console.error('Error handling Slack message or JIRA ticket:', err);
             postOnSlack(`An error occurred while processing your message.`, say);
         })
 }

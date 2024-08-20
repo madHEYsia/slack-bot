@@ -2,9 +2,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { App } = require('@slack/bolt');
+const fs = require('fs');
 const { slackBotToken, slackSigningSecret, confidenceThreshold } = require('./config');
 const { fetchFromKnowledgeBase } = require('./knowledgeBase');
 const { createJiraTicket, deleteJiraTicket } = require('./jira');
+const { fetchAllBlogContent, processBlogs, generateKnowledgeEmbeddings } = require('../Scrapping/process');
 
 // Initialize the Express app
 const expressApp = express();
@@ -85,20 +87,31 @@ slackApp.message(async ({ message, say, client }) => {
     }
 });
 
-// Start both Express and Slack Bolt app on different ports
-(async () => {
-  try {
-    // Start the Express server on port 3001
-    const expressPort = process.env.EXPRESS_PORT || 3001;
-    expressApp.listen(expressPort, () => {
-      console.log(`Express server is running on port ${expressPort}`);
-    });
-
-    // Start the Slack Bolt app on port 3000
-    const slackPort = process.env.SLACK_PORT || 3000;
-    await slackApp.start(slackPort);
+fetchAllBlogContent()
+.then(() => {
+    return processBlogs();
+})
+.then((knowledgeBase) => {
+   fs.writeFileSync('knowledgeBase.json', JSON.stringify(knowledgeBase, null, 2));
+   return generateKnowledgeEmbeddings(knowledgeBase);
+})
+.then((embeddings) => {
+    // Start both Express and Slack Bolt app on different ports
+    try {
+        // Start the Express server on port 3001
+        const expressPort = process.env.EXPRESS_PORT || 3001;
+        expressApp.listen(expressPort, () => {
+          console.log(`Express server is running on port ${expressPort}`);
+        });
+    
+        // Start the Slack Bolt app on port 3000
+        const slackPort = process.env.SLACK_PORT || 3000;
+        return slackApp.start(slackPort);
+      } catch (error) {
+        console.error('Failed to start Bolt app or Express server:', error);
+      }
+})
+.then(() => {
     console.log('⚡️ Bolt app is running!');
-  } catch (error) {
-    console.error('Failed to start Bolt app or Express server:', error);
-  }
-})();
+});
+

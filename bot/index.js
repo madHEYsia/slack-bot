@@ -59,10 +59,11 @@ const analyseMsg = (text, say, client, message) => {
     getEmbedding(text)
         .then((queryEmbedding) => {
             const { mostSimilarEntryId, maxSimilarity } = findMostSimilar(queryEmbedding);
+            console.log("mostSimilarEntryId, maxSimilarity, knowledgeBase.length ", mostSimilarEntryId, maxSimilarity, knowledgeBase.length);
 
             if (maxSimilarity > confidenceThreshold) {  // Adjust threshold as needed
                 const matchingContent = knowledgeBase.find(entry => entry.id == mostSimilarEntryId);
-                return summarizeText(matchingContent.content);
+                return matchingContent ? summarizeText(matchingContent.content) : null;
             }
             return null;
         })

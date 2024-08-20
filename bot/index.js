@@ -4,7 +4,6 @@ const bodyParser = require('body-parser');
 const { App } = require('@slack/bolt');
 const fs = require('fs');
 const { slackBotToken, slackSigningSecret, confidenceThreshold } = require('./config');
-const knowledgeBase = require('../knowledgeBase.json');
 const { createJiraTicket, deleteJiraTicket } = require('./jira');
 const { fetchAllBlogContent, processBlogs, generateKnowledgeEmbeddings, getEmbedding } = require('../Scrapping/process');
 const { findMostSimilar, summarizeText, analyzeMessageWithOpenAI } = require('./openaiAnalyzer');
@@ -55,15 +54,31 @@ const postOnSlack = async (text, say, client, message, prevJiraKey) => {
     }
 };
 
+expressApp.post('/query', (req, res) => {
+    const text = req.body.query;
+    analyzeMessageWithOpenAI(text)
+        .then((response) => {
+            const isQuery = response?.data?.choices?.[0]?.message?.content?.includes('bug');
+            console.log("response ", parsedResponse);
+            return res.status(200).json({ response: parsedResponse });
+        })
+        .catch(error => {
+            console.log("Error in catch ", error)
+            return res.status(500).json({ error });
+        })
+});
+
 const analyseMsg = (text, say, client, message) => {
     getEmbedding(text)
         .then((queryEmbedding) => {
             const { mostSimilarEntryId, maxSimilarity } = findMostSimilar(queryEmbedding);
 
-            if (maxSimilarity > 0.75) {  // Adjust threshold as needed
-                const matchingContent = knowledgeBase.find(entry => entry.id == mostSimilarEntryId);
-
-                return summarizeText(matchingContent.content);
+            if (maxSimilarity > confidenceThreshold) {  // Adjust threshold as needed
+                return import('../knowledgeBase.json')
+                    .then((knowledgeBase) => {
+                        const matchingContent = knowledgeBase.default.find(entry => entry.id == mostSimilarEntryId);
+                        return summarizeText(matchingContent.content);
+                    });
             }
             return null;
         })

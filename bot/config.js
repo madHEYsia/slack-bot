@@ -9,5 +9,5 @@ module.exports = {
     jiraBaseUrl: process.env.JIRA_BASE_URL,
     openaiApiKey: process.env.OPENAI_API_KEY,
     slackSigningSecret: process.env.SLACK_SIGNING_SECRET,
-    confidenceThreshold: 0.7,
+    confidenceThreshold: 0.75,
 };

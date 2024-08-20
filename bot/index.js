@@ -36,8 +36,8 @@ const slackApp = new App({
 });
 
 const postOnSlack = async (text, say, client, message, prevJiraKey) => {
-    const channel = message.channel;
-    const prevMsg = message.previous_message;
+    const channel = message?.channel;
+    const prevMsg = message?.previous_message;
     if (prevMsg) {
         const response = await client.chat.update({
             channel,
@@ -54,31 +54,19 @@ const postOnSlack = async (text, say, client, message, prevJiraKey) => {
     }
 };
 
-expressApp.post('/query', (req, res) => {
-    const text = req.body.query;
-    analyzeMessageWithOpenAI(text)
-        .then((response) => {
-            const isQuery = response?.data?.choices?.[0]?.message?.content?.includes('bug');
-            console.log("response ", parsedResponse);
-            return res.status(200).json({ response: parsedResponse });
-        })
-        .catch(error => {
-            console.log("Error in catch ", error)
-            return res.status(500).json({ error });
-        })
-});
-
 const analyseMsg = (text, say, client, message) => {
     getEmbedding(text)
         .then((queryEmbedding) => {
             const { mostSimilarEntryId, maxSimilarity } = findMostSimilar(queryEmbedding);
 
             if (maxSimilarity > confidenceThreshold) {  // Adjust threshold as needed
-                return import('../knowledgeBase.json')
+                return fetch('../knowledgeBase.json')
+                    .then(response => response.json())
                     .then((knowledgeBase) => {
-                        const matchingContent = knowledgeBase.default.find(entry => entry.id == mostSimilarEntryId);
+                        const matchingContent = knowledgeBase.find(entry => entry.id == mostSimilarEntryId);
                         return summarizeText(matchingContent.content);
                     });
+
             }
             return null;
         })
@@ -106,7 +94,7 @@ const analyseMsg = (text, say, client, message) => {
         })
         .catch((err) => {
             console.error('Error handling Slack message or JIRA ticket:', err);
-            postOnSlack(`An error occurred while processing your message.`, say);
+            postOnSlack(`An error occurred while processing your message.`, say, client, message);
         })
 }
 
@@ -125,7 +113,7 @@ slackApp.message(async ({ message, say, client }) => {
         analyzeMessageWithOpenAI(text)
             .then((response) => {
                 const isQuery = response?.data?.choices?.[0]?.message?.content?.includes('Yes');
-                if(isQuery)
+                if (isQuery)
                     analyseMsg(text, say, client, message);
                 else
                     console.log(`Not a query: ${text}`);
@@ -135,7 +123,7 @@ slackApp.message(async ({ message, say, client }) => {
             })
     } catch (error) {
         console.error('Error handling processing msg:', error);
-        postOnSlack(`An error occurred while processing your message.`, say);
+        postOnSlack(`An error occurred while processing your message.`, say, client, message);
     }
 });
 

@@ -49,7 +49,7 @@ async function processBlogs() {
     const knowledgeBase = [];
 
     for (const [index, entry] of blogEntries.entries()) {
-        console.log(`Processing blog ${index + 1} of ${blogEntries.length}...`);
+        // console.log(`Processing blog ${index + 1} of ${blogEntries.length}...`);
         // const chunks = await splitContentIntoChunks(entry);
         // const parsedChunks = JSON.parse(chunks);
         // parsedChunks.forEach((chunk, idx) => {
@@ -126,9 +126,10 @@ const getEmbedding = (text) => {
 
 // Generate and store embeddings for the knowledge base
 const generateKnowledgeEmbeddings = (knowledgeBase) => {
-    const embeddingPromises = knowledgeBase.map(entry => {
+    const embeddingPromises = knowledgeBase.map((entry, index) => {
         return getEmbedding(entry.content)
             .then(embedding => {
+                console.log(`Embedding ${index + 1} of ${knowledgeBase.length}...`);
                 knowledgeEmbeddings[entry.id] = embedding;
             });
     });

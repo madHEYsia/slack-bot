@@ -115,7 +115,7 @@ slackApp.message(async ({ message, say, client }) => {
     try {
         const text = message?.text || message?.message?.text;
         const botResponse = message?.message?.bot_id;
-        const isThreadMsg = message?.thread_ts;
+        const isThreadMsg = message?.thread_ts || message?.message?.thread_ts;
         if (!text || botResponse || isThreadMsg) return;
 
         console.log("==================");

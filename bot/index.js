@@ -3,7 +3,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { App } = require('@slack/bolt');
 const fs = require('fs');
-const knowledgeBase = require("../knowledgeBase.json");
 const { slackBotToken, slackSigningSecret, confidenceThreshold } = require('./config');
 const { createJiraTicket, deleteJiraTicket } = require('./jira');
 const { fetchAllBlogContent, processBlogs, generateKnowledgeEmbeddings, getEmbedding } = require('../Scrapping/process');
@@ -62,6 +61,7 @@ const analyseMsg = (text, say, client, message) => {
             console.log("mostSimilarEntryId, maxSimilarity, knowledgeBase.length ", mostSimilarEntryId, maxSimilarity, knowledgeBase.length);
 
             if (maxSimilarity > confidenceThreshold) {  // Adjust threshold as needed
+                const knowledgeBase = require("../knowledgeBase.json");
                 const matchingContent = knowledgeBase.find(entry => entry.id == mostSimilarEntryId);
                 return matchingContent ? summarizeText(matchingContent.content) : null;
             }

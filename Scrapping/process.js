@@ -78,7 +78,7 @@ const fetchContent = async (urlEndpoint) => {
     const Header = document.querySelectorAll('h1')[0].textContent;
 
     // Extract the inner text from each selected div
-    const contentTexts = Array.from(contentBlocks).map(div => div.textContent.trim().replaceAll(".", ". "));
+    const contentTexts = Array.from(contentBlocks).map(div => div.textContent.trim().replaceAll(".", ". ").replaceAll('\"', '"'));
     return `${Header}. ${contentTexts.join("")}`;
 };
 
@@ -145,5 +145,5 @@ const generateKnowledgeEmbeddings = (knowledgeBase) => {
         });
 }
 
-module.exports = { fetchAllBlogContent, processBlogs, generateKnowledgeEmbeddings, getEmbedding };
+module.exports = { knowledgeEmbeddings, fetchAllBlogContent, processBlogs, generateKnowledgeEmbeddings, getEmbedding };
 

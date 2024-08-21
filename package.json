@@ -4,7 +4,9 @@
   "description": "Slack bot that integrates with Jira to create bug tickets and KB response based on Slack messages.",
   "main": "bot/index.js",
   "scripts": {
-    "start": "node bot/index.js"
+    "start": "node bot/index.js",
+    "scrap": "node Scrapping/index.js",
+    "scrap-n-start": "npm run scrap && npm start"
   },
   "dependencies": {
     "@slack/bolt": "^3.21.0",

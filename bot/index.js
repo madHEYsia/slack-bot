@@ -58,17 +58,17 @@ const analyseMsg = (text, say, client, message) => {
     getEmbedding(text)
         .then((queryEmbedding) => {
             const { mostSimilarEntryId, maxSimilarity } = findMostSimilar(queryEmbedding);
-            console.log("mostSimilarEntryId, maxSimilarity, knowledgeBase.length ", mostSimilarEntryId, maxSimilarity, knowledgeBase.length);
 
             if (maxSimilarity > confidenceThreshold) {  // Adjust threshold as needed
                 const matchingContent = knowledgeBase.find(entry => entry.id == mostSimilarEntryId);
+                console.log("maxSimilarity, matchingContent ", maxSimilarity, matchingContent);
                 return matchingContent ? summarizeText(matchingContent.content) : null;
             }
             return null;
         })
         .then((matchingResponse) => {
             const parsedResponse = matchingResponse?.data?.choices?.[0]?.message?.content;
-            if (parsedResponse) {
+            if (parsedResponse && !parsedResponse.toLowerCase().includes('sorry')) {
                 postOnSlack(parsedResponse, say, client, message);
                 return null;
             } else {

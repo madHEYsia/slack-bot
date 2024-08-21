@@ -3,6 +3,7 @@ const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const { linksToScan } = require("./urls");
 const { openaiApiKey } = require('../bot/config');
+const { knowledgeBase } = require("../knowledgeBase.json");
 require('dotenv').config();
 
 const openaiApiUrl = 'https://api.openai.com/v1/chat/completions';

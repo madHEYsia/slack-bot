@@ -1,7 +1,7 @@
 
 const axios = require('axios');
 const { openaiApiKey } = require('./config');
-const { knowledgeEmbeddings } = require('../Scrapping/process');
+const knowledgeEmbeddings = require('../knowledgeEmbeddings.json');
 
 const openaiApiUrl = 'https://api.openai.com/v1/chat/completions';
 
@@ -71,4 +71,3 @@ const summarizeText = (query, text) => {
 }
 
 module.exports = { analyzeMessageWithOpenAI, findMostSimilar, summarizeText, cosineSimilarity };
-            

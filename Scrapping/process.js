@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { JSDOM } = require('jsdom');
+const fs = require('fs');
 const { linksToScan } = require("./urls");
 const { openaiApiKey } = require('../bot/config');
 require('dotenv').config();
@@ -75,7 +76,7 @@ const fetchContent = async (urlEndpoint) => {
 
     // Select all divs with the class "content-block" and h1 within the document
     const contentBlocks = document.querySelectorAll('div.content-block');
-    const Header = document.querySelectorAll('h1')[0].textContent;
+    const Header = document.querySelectorAll('h1')[0]?.textContent || '';
 
     // Extract the inner text from each selected div
     const contentTexts = Array.from(contentBlocks).map(div => div.textContent.trim().replaceAll(".", ". ").replaceAll('\"', '"'));
@@ -138,6 +139,7 @@ const generateKnowledgeEmbeddings = (knowledgeBase) => {
     return Promise.all(embeddingPromises)
         .then(() => {
             console.log('All embeddings generated');
+            fs.writeFileSync('knowledgeEmbeddings.json', JSON.stringify(knowledgeEmbeddings, null, 2));
             return knowledgeEmbeddings;
         })
         .catch(error => {
@@ -146,5 +148,19 @@ const generateKnowledgeEmbeddings = (knowledgeBase) => {
         });
 }
 
-module.exports = { knowledgeEmbeddings, fetchAllBlogContent, processBlogs, generateKnowledgeEmbeddings, getEmbedding };
+const startKnowledgeBaseSetup = () => {
+    fetchAllBlogContent()
+    .then(() => {
+        return processBlogs();
+    })
+    .then((knowledgeBase) => {
+        fs.writeFileSync('knowledgeBase.json', JSON.stringify(knowledgeBase, null, 2));
+        return generateKnowledgeEmbeddings(knowledgeBase);
+    })
+    .catch(error => {
+        console.log("KnowledgeBase setup failed with error ", error);
+    });
+};
 
+// Export the function so it can be called explicitly
+module.exports = { getEmbedding, startKnowledgeBaseSetup };

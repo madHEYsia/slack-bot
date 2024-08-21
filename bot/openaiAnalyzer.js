@@ -50,12 +50,13 @@ const findMostSimilar = (queryEmbedding) => {
 
 // (Optional) Summarize the content
 const summarizeText = (query, text) => {
+    console.log("query, text ", query, text);
     return axios.post(openaiApiUrl, {
         model: 'gpt-3.5-turbo-1106',
             messages: [
                 {
                     role: 'user',
-                    content: `Answer user query from given reference only.\n\n User query: ${query}\n\n Reference: ${text}`
+                    content: `Provide an accurate and concise answer to the user query using only the information from the provided reference content. Do not include any information outside of the reference.\n\nUser Query: ${query}\n\nReference Content: ${text}`
                 }
             ],
         max_tokens: 500

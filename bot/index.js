@@ -2,10 +2,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { App } = require('@slack/bolt');
-const fs = require('fs');
+const knowledgeBase = require("../knowledgeBase.json");
 const { slackBotToken, slackSigningSecret, confidenceThreshold } = require('./config');
 const { createJiraTicket, deleteJiraTicket } = require('./jira');
-const { fetchAllBlogContent, processBlogs, generateKnowledgeEmbeddings, getEmbedding } = require('../Scrapping/process');
+const { getEmbedding } = require('../Scrapping/process');
 const { findMostSimilar, summarizeText, analyzeMessageWithOpenAI } = require('./openaiAnalyzer');
 
 // Initialize the Express app
@@ -61,7 +61,6 @@ const analyseMsg = (text, say, client, message) => {
             console.log("mostSimilarEntryId, maxSimilarity, knowledgeBase.length ", mostSimilarEntryId, maxSimilarity, knowledgeBase.length);
 
             if (maxSimilarity > confidenceThreshold) {  // Adjust threshold as needed
-                const knowledgeBase = require("../knowledgeBase.json");
                 const matchingContent = knowledgeBase.find(entry => entry.id == mostSimilarEntryId);
                 return matchingContent ? summarizeText(matchingContent.content) : null;
             }
@@ -124,31 +123,19 @@ slackApp.message(async ({ message, say, client }) => {
     }
 });
 
-fetchAllBlogContent()
-    .then(() => {
-        return processBlogs();
-    })
-    .then((knowledgeBase) => {
-        fs.writeFileSync('knowledgeBase.json', JSON.stringify(knowledgeBase, null, 2));
-        return generateKnowledgeEmbeddings(knowledgeBase);
-    })
-    .then((embeddings) => {
-        // Start both Express and Slack Bolt app on different ports
-        try {
-            // Start the Express server on port 3001
-            const expressPort = process.env.EXPRESS_PORT || 3001;
-            expressApp.listen(expressPort, () => {
-                console.log(`Express server is running on port ${expressPort}`);
-            });
+(async () => {
+    try {
+        // Start the Express server on port 3001
+        const expressPort = process.env.EXPRESS_PORT || 3001;
+        expressApp.listen(expressPort, () => {
+            console.log(`Express server is running on port ${expressPort}`);
+        });
 
-            // Start the Slack Bolt app on port 3000
-            const slackPort = process.env.SLACK_PORT || 3000;
-            return slackApp.start(slackPort);
-        } catch (error) {
-            console.error('Failed to start Bolt app or Express server:', error);
-        }
-    })
-    .then(() => {
+        // Start the Slack Bolt app on port 3000
+        const slackPort = process.env.SLACK_PORT || 3000;
+        await slackApp.start(slackPort);
         console.log('⚡️ Bolt app is running!');
-    });
-
+    } catch (error) {
+        console.error('Failed to start Bolt app or Express server:', error);
+    }
+})()

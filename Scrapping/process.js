@@ -150,7 +150,7 @@ const generateKnowledgeEmbeddings = (knowledgeBase) => {
 }
 
 const startKnowledgeBaseSetup = () => {
-    if(knowledgeBase.length)
+    if(knowledgeBase?.length)
         return;
     fetchAllBlogContent()
     .then(() => {

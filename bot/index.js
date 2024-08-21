@@ -61,14 +61,13 @@ const analyseMsg = (text, say, client, message) => {
 
             if (maxSimilarity > confidenceThreshold) {  // Adjust threshold as needed
                 const matchingContent = knowledgeBase.find(entry => entry.id == mostSimilarEntryId);
-                return matchingContent ? summarizeText(matchingContent.content) : null;
+                return matchingContent ? summarizeText(text, matchingContent.content) : null;
             }
             return null;
         })
         .then((matchingResponse) => {
             const parsedResponse = matchingResponse?.data?.choices?.[0]?.message?.content;
-            console.log("Summarised resp ", matchingResponse?.data?.choices?.[0]);
-            if (parsedResponse && !parsedResponse.toLowerCase().includes('sorry')) {
+            if (parsedResponse) {
                 postOnSlack(parsedResponse, say, client, message);
                 return null;
             } else {

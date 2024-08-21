@@ -68,6 +68,7 @@ const analyseMsg = (text, say, client, message) => {
         })
         .then((matchingResponse) => {
             const parsedResponse = matchingResponse?.data?.choices?.[0]?.message?.content;
+            console.log("Summarised resp ", matchingResponse?.data?.choices?.[0]);
             if (parsedResponse && !parsedResponse.toLowerCase().includes('sorry')) {
                 postOnSlack(parsedResponse, say, client, message);
                 return null;
@@ -139,3 +140,4 @@ slackApp.message(async ({ message, say, client }) => {
         console.error('Failed to start Bolt app or Express server:', error);
     }
 })()
+

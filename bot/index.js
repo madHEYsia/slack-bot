@@ -61,7 +61,6 @@ const analyseMsg = (text, say, client, message) => {
 
             if (maxSimilarity > confidenceThreshold) {  // Adjust threshold as needed
                 const matchingContent = knowledgeBase.find(entry => entry.id == mostSimilarEntryId);
-                console.log("maxSimilarity, matchingContent ", maxSimilarity, matchingContent);
                 return matchingContent ? summarizeText(matchingContent.content) : null;
             }
             return null;
@@ -140,4 +139,3 @@ slackApp.message(async ({ message, say, client }) => {
         console.error('Failed to start Bolt app or Express server:', error);
     }
 })()
-

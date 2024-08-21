@@ -55,7 +55,7 @@ const summarizeText = (query, text) => {
             messages: [
                 {
                     role: 'user',
-                    content: `Answer user query from given context. In case no clear available, ignore it.\n\n User query: ${query}\n\n Context: ${text}`
+                    content: `Answer user query from given reference only.\n\n User query: ${query}\n\n Reference: ${text}`
                 }
             ],
         max_tokens: 500

@@ -58,7 +58,7 @@ const summarizeText = (query, text) => {
                     content: `Answer user query from given context. In case no clear available, ignore it.\n\n User query: ${query}\n\n Context: ${text}`
                 }
             ],
-        max_tokens: 100
+        max_tokens: 500
     }, {
         headers: {
             'Authorization': `Bearer ${openaiApiKey}`,
@@ -71,3 +71,4 @@ const summarizeText = (query, text) => {
 }
 
 module.exports = { analyzeMessageWithOpenAI, findMostSimilar, summarizeText, cosineSimilarity };
+            

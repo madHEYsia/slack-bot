@@ -149,6 +149,8 @@ const generateKnowledgeEmbeddings = (knowledgeBase) => {
 }
 
 const startKnowledgeBaseSetup = () => {
+    if(knowledgeBase.length)
+        return;
     fetchAllBlogContent()
     .then(() => {
         return processBlogs();
